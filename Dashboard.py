@@ -5,28 +5,36 @@ from datetime import date, timedelta
 end_date = date.today()
 start_date = end_date - timedelta(days=30)
 
-# Format URL
+# API URL constructed to fetch exchange rates from USD to multiple currency over a given date range
 url = f"https://api.frankfurter.app/{start_date}..{end_date}?from=USD&to=EUR,INR,JPY,GBP,AUD"
 
 import requests
 
+# Package the request, send the request, and catch the response: response
 response = requests.get(url)
+# Decode the JSON data into a dictionary: response_json
 response_json = response.json()
 
 
 import pandas as pd
+
+# response_json is converted into a Dataframe called Currencydata_pd.
 Currencydata_pd = pd.DataFrame.from_dict(response_json['rates'], orient='index')
 
-# Sort by date
-#Currencydata_pd.index = pd.to_datetime(Currencydata_pd.index)
-
+# Reset the Dataframe index and then rename the index column as Date.
 Currencydata_pd = Currencydata_pd.reset_index().rename(columns={'index': 'Date'})
 
+# Convert Date column to datetime format.
 Currencydata_pd['Date'] = pd.to_datetime(Currencydata_pd['Date'])
 
+# Sort dataframe by Date in ascending order
 Currencydata_pd = Currencydata_pd.sort_values(by='Date')
 
+# Get recent exchange rate by sorting data by date in descending order and fetching the 1st row
+latest_rate = Currencydata_pd.sort_values('Date', ascending=False).iloc[0]
 
+# Set font preference as a CSS style string.
+font_family = "'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif"
 
 # --- Flag icons ---
 flag_urls = {
@@ -47,8 +55,7 @@ import dash
 from dash import html, dcc
 app = dash.Dash()
 
-latest_rate = Currencydata_pd.sort_values('Date', ascending=False).iloc[0]
-font_family = "'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+
 
 def predict_future_rates_ols(currency, days_ahead_list=[7, 15]):
     df = Currencydata_pd[['Date', currency]].dropna().copy()
@@ -133,7 +140,7 @@ app.layout = html.Div(children= [
             'padding': '20px',
             'border': '1px solid #ccc',
             'borderRadius': '8px',
-            'width': '30%',
+            'width': '112%',
             'display': 'inline-block',
             'verticalAlign': 'top',
             'backgroundColor': 'white',
