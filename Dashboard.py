@@ -1,0 +1,213 @@
+
+from datetime import date, timedelta
+
+# Calculate today's and 30-days-ago dates
+end_date = date.today()
+start_date = end_date - timedelta(days=30)
+
+# Format URL
+url = f"https://api.frankfurter.app/{start_date}..{end_date}?from=USD&to=EUR,INR,JPY,GBP,AUD"
+
+import requests
+
+response = requests.get(url)
+response_json = response.json()
+
+
+import pandas as pd
+Currencydata_pd = pd.DataFrame.from_dict(response_json['rates'], orient='index')
+
+# Sort by date
+#Currencydata_pd.index = pd.to_datetime(Currencydata_pd.index)
+
+Currencydata_pd = Currencydata_pd.reset_index().rename(columns={'index': 'Date'})
+
+Currencydata_pd['Date'] = pd.to_datetime(Currencydata_pd['Date'])
+
+Currencydata_pd = Currencydata_pd.sort_values(by='Date')
+
+
+
+# --- Flag icons ---
+flag_urls = {
+    'USD': 'https://flagcdn.com/us.svg',
+    'AUD': 'https://flagcdn.com/au.svg',
+    'EUR': 'https://flagcdn.com/eu.svg',
+    'GBP': 'https://flagcdn.com/gb.svg',
+    'INR': 'https://flagcdn.com/in.svg',
+    'JPY': 'https://flagcdn.com/jp.svg'
+}
+
+
+# Import OLS from statsmodels for regression
+from statsmodels.formula.api import ols
+
+import plotly.express as px
+import dash
+from dash import html, dcc
+app = dash.Dash()
+
+latest_rate = Currencydata_pd.sort_values('Date', ascending=False).iloc[0]
+font_family = "'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+
+def predict_future_rates_ols(currency, days_ahead_list=[7, 15]):
+    df = Currencydata_pd[['Date', currency]].dropna().copy()
+    df['Date_ordinal'] = df['Date'].map(pd.Timestamp.toordinal)
+    formula = f"{currency} ~ Date_ordinal"
+    model = ols(formula=formula, data=df).fit()
+    last_date_ordinal = df['Date_ordinal'].max()
+    predictions = {}
+
+    for d in days_ahead_list:
+        future_date_ordinal = last_date_ordinal + d
+        pred = model.predict({'Date_ordinal': future_date_ordinal})[0]
+        pred_date = pd.Timestamp.fromordinal(int(future_date_ordinal))
+        predictions[pred_date] = pred
+
+    return predictions
+
+
+from dash.dependencies import Input, Output, State
+
+app.layout = html.Div(children= [
+    html.H1('RateWatch',  style={
+        'textAlign': 'center',
+        'marginBottom': '5px',
+        'color': '#2C3E50',
+        'fontWeight': '700',
+        'fontSize': '3rem',
+    }),
+    html.I('A budget currency planner', style={
+        'display': 'block',
+        'textAlign': 'center',
+        'color': '#7F8C8D',
+        'marginBottom': '20px',
+        'fontSize': '1.25rem',
+        'fontWeight': '400',
+    }),
+    html.Div([
+    html.Div([
+    html.Div([
+    html.Div([
+        html.Img(src=flag_urls['USD'], style={'width': '25px', 'verticalAlign': 'middle', 'padding-left': '5px'}),
+        html.Label('USD', style={'paddingRight': '200px', 'display': 'inline-block', 'padding-left': '5px'}),
+        dcc.Input(id='usd_input', type='number', placeholder='$ 0.00',
+                  style={'width': '100px', 'padding': '8px'})
+    ], style={'marginBottom': '10px'}),
+
+        html.Div([
+            dcc.Dropdown(
+                id='currency_dd',
+                options=[
+                    {'label': html.Span([
+                        html.Img(src=flag_urls[c], style={'width': '20px', 'marginRight': '5px'}),
+                        c
+                    ], style={'display': 'flex', 'alignItems': 'center'}), 'value': c}
+                    for c in ['AUD', 'EUR', 'GBP', 'INR', 'JPY']
+                ],
+                placeholder="Select currency",
+                value='EUR',
+                style={'width': '200px', 'display': 'inline-block', 'marginRight': '70px'}
+            ),
+            dcc.Input(id='converted_output', type='number', readOnly=True,
+                      style={'width': '100px', 'padding': '8px',
+                            'display': 'inline-block'})
+        ],style={
+            'display': 'flex',
+            'alignItems': 'center',
+            'marginTop': '10px'
+            }),
+], style= {'marginBottom':'20px'}),
+
+        html.Div([
+            html.H3('Prediction & Recommendation',
+                    style={'color': '#2C3E50', 'fontWeight': '600', 'fontFamily': font_family}),
+            html.Div(id='recommendation', style={
+                'fontWeight': 'bold',
+                'color': '#34495e',
+                'fontSize': '1.1rem',
+                'whiteSpace': 'pre-line',
+                'padding': '10px',
+            })
+        ], style={
+            'padding': '20px',
+            'border': '1px solid #ccc',
+            'borderRadius': '8px',
+            'width': '30%',
+            'display': 'inline-block',
+            'verticalAlign': 'top',
+            'backgroundColor': 'white',
+            'boxShadow': '2px 2px 8px rgba(0,0,0,0.1)',
+            'height': 'fit-content',
+        })
+]),
+    # Currency Graph
+
+    html.Div([
+        html.H3('Currency Trends (Past 30 Days)', style={'color': '#2C3E50', 'fontWeight': '600'}),
+        dcc.Graph(id='currency_graph')
+    ],
+        style={
+            'padding': '20px',
+            'border': '1px solid #ccc',
+            'borderRadius': '8px',
+            'width': '55%',
+            'display': 'inline-block',
+            'marginLeft': '10%',
+            'verticalAlign': 'top'
+        })
+        ], style={'display': 'flex',
+        'alignItems': 'flex-start'})
+], style={
+    'fontFamily': font_family,
+    'backgroundColor': '#F4F6F8',
+    'minHeight': '100vh',
+    'padding': '40px 20px'
+})
+
+
+@app.callback(
+    Output('converted_output', 'value'),
+    Output('currency_graph', 'figure'),
+    Output('recommendation', 'children'),
+    Input('currency_dd', 'value'),
+    Input('usd_input', 'value')
+)
+
+
+def update_currency_graph(currency_selected, usd_amount):
+    converted_amt = 0.0
+    if usd_amount is not None and currency_selected:
+        rate = latest_rate[currency_selected]
+        converted_amt = round(usd_amount * rate, 2)
+
+        fig = px.line(Currencydata_pd, x='Date', y=currency_selected,
+                      title=f"{currency_selected} Exchange Rate (USD Base)",
+                      markers=True)
+        fig.update_layout(yaxis_title="Rate", xaxis_title="Date")
+
+    else:
+        fig = px.line(title="Select a currency and enter amount")
+
+
+    # Linear regression predictions for 7th and 15th day from last date
+
+    if currency_selected:
+        latest = Currencydata_pd[currency_selected].iloc[-1]
+        preds = predict_future_rates_ols(currency_selected, days_ahead_list=[7, 15])
+        recs = []
+        for dt, pred_rate in preds.items():
+            if pred_rate > latest:
+                recs.append(f"{dt.date()}: Predicted rate {pred_rate:.4f} — Better to wait.")
+            else:
+                recs.append(f"{dt.date()}: Predicted rate {pred_rate:.4f} — Convert now.")
+        recommendation_text = html.Ul([html.Li(r) for r in recs])
+
+    else:
+        recommendation_text = "Please select a currency to see recommendations."
+
+    return converted_amt, fig, recommendation_text
+
+# Set the app to run
+if __name__ == '__main__':
+    app.run(debug=False)
