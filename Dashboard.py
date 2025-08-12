@@ -1,5 +1,6 @@
 
 from datetime import date, timedelta
+from logging import exception
 
 # Calculate today's and 30-days-ago dates
 end_date = date.today()
@@ -184,34 +185,42 @@ app.layout = html.Div(children= [
 
 def update_currency_graph(currency_selected, usd_amount):
     converted_amt = 0.0
-    if usd_amount is not None and currency_selected:
-        rate = latest_rate[currency_selected]
-        converted_amt = round(usd_amount * rate, 2)
+    try:
+        if usd_amount is not None and currency_selected:
+            rate = latest_rate[currency_selected]
+            converted_amt = round(usd_amount * rate, 2)
 
-        fig = px.line(Currencydata_pd, x='Date', y=currency_selected,
+            fig = px.line(Currencydata_pd, x='Date', y=currency_selected,
                       title=f"{currency_selected} Exchange Rate (USD Base)",
                       markers=True)
-        fig.update_layout(yaxis_title="Rate", xaxis_title="Date")
+            fig.update_layout(yaxis_title="Rate", xaxis_title="Date")
 
-    else:
-        fig = px.line(title="Select a currency and enter amount")
+        else:
+            fig = px.line(title="Select a currency and enter amount")
+
 
 
     # Linear regression predictions for 7th and 15th day from last date
 
-    if currency_selected:
-        latest = Currencydata_pd[currency_selected].iloc[-1]
-        preds = predict_future_rates_ols(currency_selected, days_ahead_list=[7, 15])
-        recs = []
-        for dt, pred_rate in preds.items():
-            if pred_rate > latest:
-                recs.append(f"{dt.date()}: Predicted rate {pred_rate:.4f} — Better to wait.")
-            else:
-                recs.append(f"{dt.date()}: Predicted rate {pred_rate:.4f} — Convert now.")
-        recommendation_text = html.Ul([html.Li(r) for r in recs])
+        if currency_selected:
+            latest = Currencydata_pd[currency_selected].iloc[-1]
+            preds = predict_future_rates_ols(currency_selected, days_ahead_list=[7, 15])
+            recs = []
+            for dt, pred_rate in preds.items():
+                if pred_rate > latest:
+                    recs.append(f"{dt.date()}: Predicted rate {pred_rate:.4f} — Better to wait.")
+                else:
+                    recs.append(f"{dt.date()}: Predicted rate {pred_rate:.4f} — Convert now.")
 
-    else:
-        recommendation_text = "Please select a currency to see recommendations."
+            recommendation_text = html.Ul([html.Li(r) for r in recs])
+
+        else:
+            recommendation_text = "Please select a currency to see recommendations."
+
+    except Exception as e:
+        print('Unexpected error occured')
+        fig = px.line(title ='An error occured')
+        recommendation_text = 'Could not generate recommendation due to an error'
 
     return converted_amt, fig, recommendation_text
 
