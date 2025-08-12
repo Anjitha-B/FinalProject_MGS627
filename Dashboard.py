@@ -56,8 +56,6 @@ import dash
 from dash import html, dcc
 app = dash.Dash()
 
-
-
 def predict_future_rates_ols(currency, days_ahead_list=[7, 15]):
     df = Currencydata_pd[['Date', currency]].dropna().copy()
     df['Date_ordinal'] = df['Date'].map(pd.Timestamp.toordinal)
