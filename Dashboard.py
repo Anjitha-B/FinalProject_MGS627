@@ -78,21 +78,48 @@ def predict_future_rates_ols(currency, days_ahead_list=[7, 15]):
 from dash.dependencies import Input, Output, State
 
 app.layout = html.Div(children= [
-    html.H1('RateWatch',  style={
+
+html.Div([
+    html.Div([
+        html.Div([
+            html.Img(
+                src='https://img.icons8.com/ios-filled/100/ffffff/currency-exchange.png',
+                style={
+                    'height': '60px',
+                    'marginRight': '15px',
+                }
+            ),
+            html.Div([
+                html.H1('RateWatch', style={
+                    'margin': '0',
+                    'color': '#FFFFFF',
+                    'fontWeight': '700',
+                    'fontSize': '2.8rem',
+                    'lineHeight': '1.2'
+                }),
+                html.I('A budget currency planner', style={
+                    'color': '#BDC3C7',
+                    'fontSize': '1.2rem',
+                    'fontWeight': '400',
+                })
+            ], style={'display': 'flex', 'flexDirection': 'column'})
+        ], style={
+            'display': 'flex',
+            'alignItems': 'center',
+            'justifyContent': 'center'
+        })
+    ], style={
+        'padding': '30px 20px',
+        'backgroundColor': '#2C3E50',
+        'borderRadius': '12px',
+        'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.3)',
+        'marginBottom': '30px',
         'textAlign': 'center',
-        'marginBottom': '5px',
-        'color': '#2C3E50',
-        'fontWeight': '700',
-        'fontSize': '3rem',
-    }),
-    html.I('A budget currency planner', style={
-        'display': 'block',
-        'textAlign': 'center',
-        'color': '#7F8C8D',
-        'marginBottom': '20px',
-        'fontSize': '1.25rem',
-        'fontWeight': '400',
-    }),
+    })
+]),
+
+
+
     html.Div([
     html.Div([
     html.Div([
@@ -129,7 +156,7 @@ app.layout = html.Div(children= [
 
         html.Div([
             html.H3('Prediction & Recommendation',
-                    style={'color': '#2C3E50', 'fontWeight': '600', 'fontFamily': font_family}),
+                    style={'color': '#2C3E50', 'fontWeight': '600', 'fontFamily': font_family, 'textDecoration':'underline'}),
             html.Div(id='recommendation', style={
                 'fontWeight': 'bold',
                 'color': '#34495e',
@@ -168,10 +195,6 @@ app.layout = html.Div(children= [
         'alignItems': 'flex-start'})
 ], style={
     'fontFamily': font_family,
-    'backgroundImage': 'url("https://www.shutterstock.com/shutterstock/photos/1793533867/display_1500/stock-vector-money-transfer-global-currency-stock-exchange-stock-vector-illustration-eps-1793533867.jpg")',
-    'backgroundSize': 'cover',
-    'backgroundRepeat': 'no-repeat',
-    'backgroundPosition': 'center top',
     'backgroundColor': '#F4F6F8',
     'minHeight': '100vh',
     'padding': '40px 20px'
@@ -201,7 +224,7 @@ def update_currency_graph(currency_selected, usd_amount):
             fig.update_layout(yaxis_title="Rate", xaxis_title="Date")
 
         else:
-            fig = px.line(title="Select a currency and enter amount")
+            fig = px.line(title="Select a currency and enter an amount")
 
 
 
