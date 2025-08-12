@@ -95,7 +95,7 @@ html.Div([
                     'fontSize': '2.8rem',
                     'lineHeight': '1.2'
                 }),
-                html.I('A budget currency planner', style={
+                html.I('From Dollars to Destinations - We’ve Got You Covered.', style={
                     'color': '#BDC3C7',
                     'fontSize': '1.2rem',
                     'fontWeight': '400',
