@@ -183,6 +183,7 @@ app.layout = html.Div(children= [
 
 
 def update_currency_graph(currency_selected, usd_amount):
+    #converted_amt variable is created for storing the conversion rate result.
     converted_amt = 0.0
     if usd_amount is not None and currency_selected:
         rate = latest_rate[currency_selected]
