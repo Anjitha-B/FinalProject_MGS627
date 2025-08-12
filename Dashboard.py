@@ -57,6 +57,18 @@ from dash import html, dcc
 app = dash.Dash()
 
 def predict_future_rates_ols(currency, days_ahead_list=[7, 15]):
+    """
+    This function predicts what the exchange rate for a currency might be in the future.
+    How it works:
+    1. It takes past exchange rate data for the currency from `Currencydata_pd`.
+    2. It finds a trend line using a method called Ordinary Least Squares (OLS) regression.
+    3. It uses that trend line to predict the exchange rate for certain days in the future.
+    :param currency:The name of the column in the data that has the currency's rates.
+    :param days_ahead_list:How many days ahead you want predictions for.
+    :return:dict: A dictionary where:
+            - The keys are the future dates.
+            - The values are the predicted rates for those dates.
+    """
     df = Currencydata_pd[['Date', currency]].dropna().copy()
     df['Date_ordinal'] = df['Date'].map(pd.Timestamp.toordinal)
     formula = f"{currency} ~ Date_ordinal"
@@ -209,7 +221,19 @@ html.Div([
 
 
 def update_currency_graph(currency_selected, usd_amount):
+    """
+       Creates an exchange rate chart, converts USD to the selected currency,
+       and gives buy/wait recommendations based on future rate predictions.
+
+       Parameters:
+        currency_selected (str): The name of the currency to convert to and plot.
+        usd_amount (float): The amount in USD to convert.
+
+        Returns:
+        tuple: (converted amount, chart figure, recommendation text)
+       """
     #converted_amt variable is created for storing the conversion rate result.
+
     converted_amt = 0.0
     try:
         if usd_amount is not None and currency_selected:
