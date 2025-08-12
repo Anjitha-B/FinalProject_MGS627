@@ -168,6 +168,10 @@ app.layout = html.Div(children= [
         'alignItems': 'flex-start'})
 ], style={
     'fontFamily': font_family,
+    'backgroundImage': 'url("https://www.shutterstock.com/shutterstock/photos/1793533867/display_1500/stock-vector-money-transfer-global-currency-stock-exchange-stock-vector-illustration-eps-1793533867.jpg")',
+    'backgroundSize': 'cover',
+    'backgroundRepeat': 'no-repeat',
+    'backgroundPosition': 'center top',
     'backgroundColor': '#F4F6F8',
     'minHeight': '100vh',
     'padding': '40px 20px'
