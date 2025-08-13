@@ -248,8 +248,6 @@ def update_currency_graph(currency_selected, usd_amount):
         else:
             fig = px.line(title="Select a currency and enter an amount")
 
-
-
     # Linear regression predictions for 7th and 15th day from last date
 
         if currency_selected:
@@ -258,9 +256,17 @@ def update_currency_graph(currency_selected, usd_amount):
             recs = []
             for dt, pred_rate in preds.items():
                 if pred_rate > latest:
-                    recs.append(f"{dt.date()}: Predicted rate {pred_rate:.4f} — Better to wait.")
+                    message = html.Span([
+                        f"{dt.date()}: Predicted rate {pred_rate:.4f} — ",
+                        html.Span("Better to wait.", style={'fontStyle': 'italic', 'color': 'red'})
+                    ])
+                    recs.append(html.Li(message))
                 else:
-                    recs.append(f"{dt.date()}: Predicted rate {pred_rate:.4f} — Convert now.")
+                    message = html.Span([
+                        f"{dt.date()}: Predicted rate {pred_rate:.4f} — ",
+                        html.Span("Convert now.", style={'fontStyle': 'italic','color': 'green'})
+                    ])
+                    recs.append(html.Li(message))
 
             recommendation_text = html.Ul([html.Li(r) for r in recs])
 
@@ -268,7 +274,7 @@ def update_currency_graph(currency_selected, usd_amount):
             recommendation_text = "Please select a currency to see recommendations."
 
     except Exception as e:
-        print('Unexpected error occured')
+        print('Unexpected error occured:', e)
         fig = px.line(title ='An error occured')
         recommendation_text = 'Could not generate recommendation due to an error'
 
