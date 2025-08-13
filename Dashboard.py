@@ -86,7 +86,7 @@ def predict_future_rates_ols(currency, days_ahead_list=[7, 15]):
 
     except Exception as e:
         print(f"Error predicting future rates for {currency}: {e}")
-        # Optionally log or raise, or leave empty dict as fallback
+
 
     return predictions
 
@@ -127,7 +127,7 @@ html.Div([
             'display': 'flex',
             'alignItems': 'center',
             'justifyContent': 'center',
-            'gap': '10px'  # optional: use gap instead of marginRight if preferred
+            'gap': '10px'
         })
 
 
