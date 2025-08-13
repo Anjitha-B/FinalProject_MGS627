@@ -69,18 +69,24 @@ def predict_future_rates_ols(currency, days_ahead_list=[7, 15]):
             - The keys are the future dates.
             - The values are the predicted rates for those dates.
     """
-    df = Currencydata_pd[['Date', currency]].dropna().copy()
-    df['Date_ordinal'] = df['Date'].map(pd.Timestamp.toordinal)
-    formula = f"{currency} ~ Date_ordinal"
-    model = ols(formula=formula, data=df).fit()
-    last_date_ordinal = df['Date_ordinal'].max()
     predictions = {}
+    try:
+        df = Currencydata_pd[['Date', currency]].dropna().copy()
+        df['Date_ordinal'] = df['Date'].map(pd.Timestamp.toordinal)
+        formula = f"{currency} ~ Date_ordinal"
+        model = ols(formula=formula, data=df).fit()
+        last_date_ordinal = df['Date_ordinal'].max()
 
-    for d in days_ahead_list:
-        future_date_ordinal = last_date_ordinal + d
-        pred = model.predict({'Date_ordinal': future_date_ordinal})[0]
-        pred_date = pd.Timestamp.fromordinal(int(future_date_ordinal))
-        predictions[pred_date] = pred
+
+        for d in days_ahead_list:
+            future_date_ordinal = last_date_ordinal + d
+            pred = model.predict({'Date_ordinal': future_date_ordinal})[0]
+            pred_date = pd.Timestamp.fromordinal(int(future_date_ordinal))
+            predictions[pred_date] = pred
+
+    except Exception as e:
+        print(f"Error predicting future rates for {currency}: {e}")
+        # Optionally log or raise, or leave empty dict as fallback
 
     return predictions
 
@@ -92,32 +98,41 @@ app.layout = html.Div(children= [
 html.Div([
     html.Div([
         html.Div([
-            html.Img(
+
+            html.Div([
+                html.Div([
+                html.Img(
                 src='https://img.icons8.com/ios-filled/100/ffffff/currency-exchange.png',
                 style={
                     'height': '60px',
                     'marginRight': '15px',
                 }
-            ),
-            html.Div([
+                ),
                 html.H1('RateWatch', style={
                     'margin': '0',
                     'color': '#FFFFFF',
                     'fontWeight': '700',
                     'fontSize': '2.8rem',
-                    'lineHeight': '1.2'
+                    'lineHeight': '1.2',
                 }),
+                ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'}),
+
                 html.I('From Dollars to Destinations - We’ve Got You Covered', style={
                     'color': '#BDC3C7',
                     'fontSize': '1.2rem',
                     'fontWeight': '400',
                 })
-            ], style={'display': 'flex', 'flexDirection': 'column'})
+            ])
         ], style={
             'display': 'flex',
             'alignItems': 'center',
-            'justifyContent': 'center'
+            'justifyContent': 'center',
+            'gap': '10px'  # optional: use gap instead of marginRight if preferred
         })
+
+
+
+
     ], style={
         'padding': '30px 20px',
         'backgroundColor': '#2C3E50',
